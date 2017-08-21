@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:fb="http://ogp.me/ns/fb#" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Example Facebook app using Flask and Python Facebook SDK">
+    <!-- These are Open Graph tags.-->
+    <meta property="fb:app_id" content="{{ app_id }}"/>
+    <title>{{ app_name }} with D3 Force-Directed Graph</title>
+    <style>
+        #container_fb {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        #info {
+            min-width: 300px;
+            min-height: 100px;
+            position: absolute;
+            z-index: 1;
+            box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+            background-color: rgba(253, 216, 53, 0.75);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            padding: 15px;
+            max-height: 100%;
+            overflow: auto;
+        }
+
+        #name {
+            font-weight: normal;
+        }
+
+        .nodes circle {
+            stroke: #fff;
+            stroke-width: 1px;
+        }
+
+        .nodes circle:hover {
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+
+        .nodes circle.selected {
+            stroke: #000;
+        }
+
+        .links line {
+            stroke-opacity: 0.7;
+            stroke-width: 1px;
+        }
+
+        .links line:hover {
+            stroke-opacity: 1;
+            stroke-width: 2px;
+
+        }
+
+        .links line.selected {
+            stroke-opacity: 1;
+            stroke: #d32f2f;
+            stroke-width: 3px;
+        }
+
+        #fb_pic {
+            float: right;
+            margin: 20px;
+            width: 125px;
+            height: 125px;
+            border-radius: 100%;
+            display: inline-block;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position-x: center;
+        }
+
+        #fb_pic img {
+            border-radius: 50%;
+        }
+
+        #name {
+            display: inline-block;
+        }
+
+        #name, #properties, #relationships {
+            min-width: 180px;
+            max-width: 320px;
+        }
+
+        #greeting {
+            width: 300px;
+            display: inline-block;
+        }
+
+        a#logout {
+            float: right;
+        }
+        .center {
+            margin: 0 auto;
+            text-align: center;
+        }
+    </style>
+    <!--[if IE]>
+    <script type="text/javascript">
+        var tags = ['header', 'section'];
+        while (tags.length)
+            document.createElement(tags.pop());
+    </script>
+    <![endif]-->
+</head>
+<body>
+<div class="container_fb">
+    {% block content %} {% endblock %}
+</div>
+
+<script>
+    window.fbAsyncInit = function () {
+        FB.init({
+            appId: '{{ app_id }}',
+            status: true,
+            cookie: true,
+            xfbml: true,
+            version: 'v2.8'
+        });
+
+//fires when the user logs in
+        FB.Event.subscribe('auth.login', function (response) {
+            window.location = window.location;
+            console.log('logged in')
+        });
+    };
+
+    // Load the SDK Asynchronously
+    (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {
+            return;
+        }
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+</script>
+{% block pagescript %} {% endblock %}
+</body>
+</html>

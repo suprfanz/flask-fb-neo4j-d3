@@ -1,0 +1,13 @@
+Flask
+Jinja2
+MarkupSafe
+Werkzeug
+argparse
+distribute
+facebook-sdk
+itsdangerous
+requests
+neo4j-driver
+supervisor
+nginx
+uwsgi

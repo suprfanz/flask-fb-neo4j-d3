@@ -1,0 +1,4 @@
+.idea*
+*Thumbs.db
+*__pycache__
+*.bak
