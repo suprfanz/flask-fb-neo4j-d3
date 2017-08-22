@@ -304,7 +304,7 @@ We welcome contributions to this project and are open to ideas. Please read [CON
 ## Authors
 
 * **Ray Bernard** - [@SuprFanz](https://github.com/suprfanz)
-* **Jen Webb** - [@jndoy](https://github.com/jndoy)
+* **Jen Webb** - [@jenwebb](https://github.com/jenwebb)
 
 
 ## License
