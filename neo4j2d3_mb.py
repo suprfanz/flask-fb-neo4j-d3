@@ -65,7 +65,7 @@ def main():
     print(graphjson)
     # put your file path to json data here
     with open(
-            "C:\\Users\\emjay\\Documents\\SuprFanz\\Dev\\neo42d3\\app\\static\\data\\neo4j2d3_new.json",
+            "C:\\Users\\yourname\\Documents\\path\\to\\neo42d3\\app\\static\\data\\neo4j2d3_new.json",
             "w") as f:
         f.write(graphjson)
     return graphjson
