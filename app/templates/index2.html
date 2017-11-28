@@ -60,6 +60,24 @@
     d3.json(dataSource, function (error, graph) {
         if (error) throw error;
 
+        // Code for neighbor highlighting
+        var linkedByIndex = {};
+        graph.links.forEach(function(d) {
+        linkedByIndex[d.source + "," + d.target] = true;
+        });
+    
+        function isConnected(a, b) {
+            return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+        }
+    
+        function hasConnections(a) {
+            for (var property in linkedByIndex) {
+                    s = property.split(",");
+                    if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) 					return true;
+            }
+        return false;
+        }
+
         var link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
@@ -90,7 +108,7 @@
             .data(graph.nodes)
             .enter().append("circle")
             .attr("r", function (d) {
-                return (d.group === 0 ? 15 : 5);
+                return (d.group === 0 ? 30 : 10);
             })
             .attr("fill", function (d) {
                 return (d.group === 0 ? '#fdd835' : '#90caf9');
