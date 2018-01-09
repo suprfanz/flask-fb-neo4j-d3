@@ -16,21 +16,20 @@ class User(object):
         self.profile_url = profile_url
         self.access_token = access_token
 
-        self.session = GraphDatabase.driver("bolt://{}:7687".format(neo4j_dbip),
-                                            auth=basic_auth("neo4j", "{}".format(neo4j_password))).session()
-
     def create_user(self):
         # creates the user
         insert_query = '''
         MERGE (n:user{id:{id}, name:{name},profile_url:{profile_url}, access_token:{access_token}})
 
         '''
-        self.session.run(insert_query, parameters={"id": self.id,
-                                                   "name": self.name,
-                                                   "profile_url": self.profile_url,
-                                                   "access_token": self.access_token
-                                                   })
-        # self.session.close()
+        with  GraphDatabase.driver("bolt://{}:7687".format(neo4j_dbip),
+                                   auth=basic_auth("neo4j", "{}".format(neo4j_password))) as driver:
+            with driver.session() as session:
+                session.run(insert_query, parameters={"id": self.id,
+                                                      "name": self.name,
+                                                      "profile_url": self.profile_url,
+                                                      "access_token": self.access_token
+                                                      })
 
     def check_user(self):
         # checks if the user exists already
@@ -39,10 +38,12 @@ class User(object):
         WHERE n.id = {id}
         RETURN n.id AS id, n.name AS name, n.access_token AS access_token, n.profile_url AS profile_url
         '''
-        result = self.session.run(insert_query, parameters={"id": self.id})
-        self.session.close()
-        for record in result:
-            return dict(record)
+        with  GraphDatabase.driver("bolt://{}:7687".format(neo4j_dbip),
+                                   auth=basic_auth("neo4j", "{}".format(neo4j_password))) as driver:
+            with driver.session() as session:
+                result = session.run(insert_query, parameters={"id": self.id})
+                for record in result:
+                    return dict(record)
 
 
 if __name__ == '__main__':
