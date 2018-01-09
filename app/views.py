@@ -3,7 +3,7 @@ from flask import g, render_template, redirect, request, session, url_for, jsoni
 from app import app
 from app.models import User
 from app.facebookevent.run_get_facebook_event_class import FacebookEvents
-from neo4j2d3_mb import main
+from neo4j2d3_mb import db_json
 
 # Add your Facebook app details
 FB_APP_ID = '###############'
@@ -16,7 +16,7 @@ def index():
     # If a user was set in the get_current_user function before the request,
     # the user is logged in.
     if g.user:
-        main()
+        db_json()
         # converts the neo4j data into graphjson
         return render_template('index.html', app_id=FB_APP_ID,
                                app_name=FB_APP_NAME, user=g.user)
@@ -35,7 +35,7 @@ def importevent():
         facebookevents.get_facebook_event()
         facebookevents.get_rsvps()
         # pulls event data from facebook and imports it into neo4j
-        main()
+        db_json()
         # converts the neo4j data into graphjson
         return redirect(url_for('index'))
 
