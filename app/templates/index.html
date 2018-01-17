@@ -32,16 +32,35 @@
 <script src="/static/js/d3.v4.min.js"></script>
 <script src="/static/js/jquery-3.2.1.slim.min.js"></script>
 <script>
+
+    /////////////////////////////////////////////
+    // Variables supporting Version 4.0 implementation -
+    // neighboring node highlighting
+    var focus_node = null, highlight_node = null;
+    var highlight_color = "blue";
+    var highlight_trans = 0.1;
+    var outline = false;
+    var default_node_color = "#ccc";
+    //var default_node_color = "rgb(3,190,100)";
+    //var default_link_color = "#888";
+    // End Version 4.0 implementation
+    /////////////////////////////////////////////
+
     var timeStamp = Math.floor(Date.now() / 1000),
         dataSource = "/static/data/neo4j2d3_new.json" + "?time=" + timeStamp,
-        svg = d3.select("svg"),
         width = window.innerWidth,
-        height = window.innerHeight;
+        height = window.innerHeight,
+        svg = d3.select("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .call(d3.zoom().on("zoom", function () {
+           svg.attr("transform", d3.event.transform)
+        }));
     // D3 force layout
     var simulation = d3.forceSimulation()
         .force("link", d3.forceLink()
             .distance(function (d) {
-                return (3 - (d.value / 3)) * 66;
+                return (3 - (d.value / 3)) * 55;
             })
             .strength(function (d) {
                 return (3 - (d.value / 3)) * 0.5;
@@ -49,7 +68,6 @@
             .id(function (d) {
                 return d.id;
             }))
-        .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(width / 2, height / 2));
 
     d3.json(dataSource, function (error, graph) {
@@ -85,8 +103,9 @@
             .data(graph.nodes)
             .enter().append("circle")
             .attr("r", function (d) {
-                return (d.group === 0 ? 15 : 5);
+                return (d.group === 0 ? 30 : 10);
             })
+            .attr("stroke", "white")
             .attr("fill", function (d) {
                 return (d.group === 0 ? '#fdd835' : '#90caf9');
             })
@@ -119,6 +138,168 @@
 
         simulation.force("link")
             .links(graph.links);
+
+        simulation
+            .force("charge", d3.forceManyBody())
+                //.strength(function (d) {
+                //    return (d.group === 0 ? -500 : -100);}))
+            .force('collision', d3.forceCollide()
+                .radius(function (d) {
+                    return (d.group === 0 ? 20 : 12);}));
+
+        ///////////////////////////////////////////////////
+        // Version 4.0 implementation - 
+        // adding neighboring nodes highlighting
+
+        var tocolor = "fill";
+        var towhite = "stroke";
+        if (outline) {
+            tocolor = "stroke"
+            towhite = "fill"
+        }
+        
+        var linkedByIndex = {};
+        graph.links.forEach(function(d) {
+        linkedByIndex[d.source + "," + d.target] = true;
+        });
+    
+        function isConnected(a, b) {
+            return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+        }
+    
+        function hasConnections(a) {
+            for (var property in linkedByIndex) {
+                    s = property.split(",");
+                    if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) 					return true;
+            }
+        return false;
+        }
+        
+        node.on("mouseover", function(d) {
+            set_highlight(d);
+            })
+          .on("mousedown", function(d) { d3.event.stopPropagation();
+              focus_node = d;
+            set_focus(d)
+            if (highlight_node === null) set_highlight(d)
+            
+        }	).on("mouseout", function(d) {
+                exit_highlight();
+        
+        }	);
+        
+                d3.select(window).on("mouseup",  
+                function() {
+                if (focus_node!==null)
+                {
+                    focus_node = null;
+                    if (highlight_trans<1)
+                    {
+            
+                        node.style("opacity", 1);
+                        //text.style("opacity", 1);
+                        link.style("opacity", 1);
+            }
+                }
+            
+            if (highlight_node === null) exit_highlight();
+                });
+        
+        function exit_highlight()
+        {
+                highlight_node = null;
+            if (focus_node===null)
+            {
+                svg.style("cursor","move");
+                if (highlight_color!="white")
+            {
+                node.style(towhite, "white");
+                //text.style("font-weight", "normal");
+                link.style("stroke", function (d) {
+                    var colorstroke;
+                    //different edge colors based on edge value
+                    switch (d.value) {
+                        case 1:
+                            colorstroke = "#CCC";
+                            break;
+                        case 2:
+                            colorstroke = "#ffa726";
+                            break;
+                        case 3:
+                            colorstroke = "#b2ff59";
+                            break;
+                        default:
+                            colorstroke = "#CCC";
+                    }
+                    return colorstroke;
+                }); //function(o) {return (isNumber(o.score) && o.score>=0)?color(o.score):default_link_color});
+         }
+                    
+            }
+        }
+        
+        function set_focus(d)
+        {	
+        if (highlight_trans<1)  {
+            node.style("opacity", function(o) {
+                        return isConnected(d, o) ? 1 : highlight_trans;
+                    });
+        
+                    //text.style("opacity", function(o) {
+                    //    return isConnected(d, o) ? 1 : highlight_trans;
+                    //});
+                    
+                    link.style("opacity", function(o) {
+                        return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
+                    });		
+            }
+        }
+        
+        
+        function set_highlight(d)
+        {
+            svg.style("cursor","pointer");
+            if (focus_node!==null) d = focus_node;
+            highlight_node = d;
+        
+            if (highlight_color!="white")
+            {
+                  node.style(towhite, function(o) {
+                        return isConnected(d, o) ? highlight_color : "white";});
+                    //text.style("font-weight", function(o) {
+                    //    return isConnected(d, o) ? "bold" : "normal";});
+                    link.style("stroke", function(o) {
+                      return o.source.index == d.index || o.target.index == d.index ? highlight_color : (
+                        function (d) {
+                            var colorstroke;
+                            //different edge colors based on edge value
+                            switch (d.value) {
+                                case 1:
+                                    colorstroke = "#CCC";
+                                    break;
+                                case 2:
+                                    colorstroke = "#ffa726";
+                                    break;
+                                case 3:
+                                    colorstroke = "#b2ff59";
+                                    break;
+                                default:
+                                    colorstroke = "#CCC";
+                            }
+                            return colorstroke;
+                        }
+                      ); //((isNumber(o.score) && o.score>=0)?color(o.score):default_link_color);
+        
+                    });
+            }
+        }
+
+        function isNumber(n) {
+            return !isNaN(parseFloat(n)) && isFinite(n);
+        }	
+
+        // End Version 4.0 implementation
+        ///////////////////////////////////////////////////
 
         function ticked() {
             link
