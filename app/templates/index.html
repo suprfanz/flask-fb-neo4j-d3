@@ -37,7 +37,7 @@
     // Variables supporting Version 4.0 implementation -
     // neighboring node highlighting
     var focus_node = null, highlight_node = null;
-    var highlight_color = "blue";
+    var highlight_color = "#d32f2f";
     var highlight_trans = 0.1;
     var outline = false;
     var default_node_color = "#ccc";
@@ -48,13 +48,13 @@
 
     var timeStamp = Math.floor(Date.now() / 1000),
         dataSource = "/static/data/neo4j2d3_new.json" + "?time=" + timeStamp,
-        width = window.innerWidth,
-        height = window.innerHeight,
+        width = $('body').width(),
+        height = $('body').height(),
         svg = d3.select("svg")
         .attr("width", width)
         .attr("height", height)
         .call(d3.zoom().on("zoom", function () {
-           svg.attr("transform", d3.event.transform)
+           svg.selectAll('g').attr("transform", d3.event.transform)
         }));
     // D3 force layout
     var simulation = d3.forceSimulation()
