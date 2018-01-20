@@ -32,17 +32,13 @@
 <script src="/static/js/d3.v4.min.js"></script>
 <script src="/static/js/jquery-3.2.1.slim.min.js"></script>
 <script>
-
-    /////////////////////////////////////////////
-    // Variables supporting Version 4.0 implementation -
     // neighboring node highlighting
-    var focus_node = null, highlight_node = null;
-    var highlight_color = "#d32f2f";
-    var highlight_trans = 0.1;
-    var outline = false;
-    var default_node_color = "#ccc";
-
-    var timeStamp = Math.floor(Date.now() / 1000),
+    var focus_node = null,
+        highlight_node = null,
+        highlight_color = "#d32f2f",
+        highlight_trans = 0.1,
+        outline = false,
+        timeStamp = Math.floor(Date.now() / 1000),
         dataSource = "/static/data/neo4j2d3_new.json" + "?time=" + timeStamp,
         width = $('body').width(),
         height = $('body').height(),
@@ -52,6 +48,7 @@
         .call(d3.zoom().on("zoom", function () {
            svg.selectAll('g').attr("transform", d3.event.transform)
         }));
+
     // D3 force layout
     var simulation = d3.forceSimulation()
         .force("link", d3.forceLink()
@@ -101,14 +98,14 @@
             .attr("r", function (d) {
                 return (d.group === 0 ? 30 : 10);
             })
-            .attr("stroke", "white")
             .attr("fill", function (d) {
                 return (d.group === 0 ? '#fdd835' : '#90caf9');
             })
             .call(d3.drag()
                 .on("start", dragstarted)
-                .on("drag", dragged));
-//              .on("end", dragended));
+                .on("drag", dragged)
+//                .on("end", dragended)
+            );
 
         //show the node's name property on hover
         node.append("title")
@@ -143,7 +140,6 @@
                 }));
 
         // adding neighboring nodes highlighting
-
         var tocolor = "fill";
         var towhite = "stroke";
         if (outline) {
@@ -160,14 +156,6 @@
             return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index === b.index;
         }
     
-        function hasConnections(a) {
-            for (var property in linkedByIndex) {
-                    s = property.split(",");
-                if ((s[0] === a.index || s[1] === a.index) && linkedByIndex[property]) return true;
-            }
-        return false;
-        }
-        
         node.on("mouseover", function(d) {
             set_highlight(d);
             })
@@ -195,6 +183,24 @@
             if (highlight_node === null) exit_highlight();
                 });
         
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+
+//        function dragended(d) {
+//            //keeps the nodes unlocked after dragging
+//            if (!d3.event.active) simulation.alphaTarget(0);
+//            d.fx = null;
+//            d.fy = null;
+//        }
+
         function exit_highlight() {
                 highlight_node = null;
             if (focus_node === null) {
@@ -271,10 +277,6 @@
             }
         }
 
-        function isNumber(n) {
-            return !isNaN(parseFloat(n)) && isFinite(n);
-        }	
-
         function ticked() {
             link
                 .attr("x1", function (d) {
@@ -300,34 +302,17 @@
         }
     });
 
-    function dragstarted(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-    }
-
-//    function dragended(d) {
-//        //keeps the nodes unlocked after dragging
-//        if (!d3.event.active) simulation.alphaTarget(0);
-//        d.fx = null;
-//        d.fy = null;
-//    }
-
     function showinfo(d) {
         //display info about nodes and edges in info box when clicked
         var nameTxt = $('#name'),
             propTxt = $('#properties'),
             typeTxt = $('#type'),
             fbPic = $('#fb_pic');
-
+        //remove selected class from all other elements
         $('.nodes circle, .links line').not(this).removeClass("selected");
-        if (!$(this).is('.selected')) {
 
+        if (!$(this).is('.selected')) {
+            //if the clicked element doesn't have the selected class, add it
             this.setAttribute('class', "selected");
 
             if (d.id) {
@@ -347,9 +332,9 @@
             console.log(d);
 
         } else {
-
+            //if the clicked element has the selected class remove it
             $(this).removeClass('selected');
-
+            //remove the information about the previous selected element
             nameTxt.html('');
             propTxt.html('');
             typeTxt.html('');
@@ -363,11 +348,12 @@
             submitBtn = $('[name="submit"]');
 
         eventURL.focus(function () {
+            //reset the error message when clicking on the input
             errorMsg.text('');
         });
 
         $('#event_import_form').submit(function (e) {
-            //vaildate the event import forms
+            //validate the event import forms
             eventURLval = eventURL.val();
             eventURLval = eventURLval.trim();
             //regex to ensure valid event URL
@@ -378,6 +364,7 @@
                 submitBtn.attr('disabled', true);
 
             } else {
+                //post error message if not a valid event URL
                 e.preventDefault();
                 errorMsg.text('Please enter a valid Facebook event');
                 return false;
