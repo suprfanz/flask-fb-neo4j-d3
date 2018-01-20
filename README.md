@@ -1,7 +1,7 @@
 # SuprFanz.com Tutorial: Importing Data from Facebook into Neo4j for D3 Data Visualizaion Step by Step
 
-The purpose of this lab is connect to the Facebook API using python and import Event data into 
-[Neo4j](https://neo4j.com/) and present the data in a simple attractive graph visualization via [D3](https://d3js.org/). 
+The purpose of this lab is connect to the [Facebook API](https://developers.facebook.com/docs/graph-api) using Flask python,  import Event data into 
+[Neo4j](https://neo4j.com/) and present it in a simple attractive graph visualization via [D3](https://d3js.org/). 
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ If you're running the project locally, you have to use an IP address. Facebook w
 ```
 # Facebook app details
 FB_APP_ID = '###############'
-FB_APP_NAME = 'SuprFanz Data Visualization Demo'
+FB_APP_NAME = 'Your App Name'
 FB_APP_SECRET = '###################################'
 # Fill in ### with your own app details
 
@@ -45,7 +45,28 @@ This project is based on the [Facebook SDK Flask Example](https://github.com/mob
 ```
 pip install -r requirements
 ```
-To import Facebook events there is an option to use the FacebookEvents class or just the individual functions in run_get_facebook_event.py. The project is set up to use the class by default but some people prefer not to.
+Models.py  is where the User class is, which is how the user gets registered and logged in. When connecting to the app by Facebook for the first time, the user logs into Facebook and says yes to give the app permissions. Then the script looks to see if the user already exists in the database, and if they don't, a new User node is created in the database. 
+
+```
+def create_user(self):
+# creates the user
+insert_query = '''
+MERGE (n:user{id:{id}, name:{name},profile_url:{profile_url}, access_token:{access_token}})
+
+'''
+with  GraphDatabase.driver("bolt://{}:7687".format(neo4j_dbip),
+                           auth=basic_auth("neo4j", "{}".format(neo4j_password))) as driver:
+    with driver.session() as session:
+        session.run(insert_query, parameters={"id": self.id,
+                                              "name": self.name,
+                                              "profile_url": self.profile_url,
+                                              "access_token": self.access_token
+                                              })
+```
+ 
+ The next time the user logs in
+
+To import Facebook events there is the FacebookEvents class.
 
 The class is called with:
 ```
@@ -57,24 +78,7 @@ The class is called with:
     facebookevents.get_rsvps()
 ```
 
-If you don't use the class, change the import statement in views.py from
-
-```
-from app.facebookevent.run_get_facebook_event_class import FacebookEvents
-```
-
-to 
-
-```
-from app.facebookevent.run_get_facebook_event import get_facebook_event_main
-```
-then call the function with 
-
-```
-get_facebook_event_main(event_id, token)
-```
-
-Both need to be passed the Facebook event id and a valid access token.
+It needs to be passed the Facebook event id and a valid access token.
 
 The Facebook event ID is in the URL for a Facebook event and is a unique identifier Facebook uses for events. It is not always the same length. The JavaScript form validation ensures that this ID is what gets passed into the Python function rather than the whole URL.
 ```
@@ -82,7 +86,7 @@ https://www.facebook.com/events/###############/
 # The ### is the event ID
 ```
 
-The script neo4j2d3_mb.py converts your Neo4j data to D3 json to be used in the D3 visualization. It creates a json file in static/data. You will need to change the path to your own local or server path
+The script neo4j2d3_mb.py converts your Neo4j data to D3 JSON to be used in the D3 visualization. It creates a JSON file in static/data. You will need to change the path to your own local or server path
 
     with open(
             "C:\\Users\\yourusername\\Documents\\path\\to\\neo4j2d3\\app\\static\\data\\neo4j2d3_new.json",
@@ -103,7 +107,7 @@ def index():
                                app_name=FB_APP_NAME, user=g.user)
 
 ```
-The required json format is basically a flat list of nodes and then a flat list of links(edges). The links must have a source and target that correspond to the nodes they're related to. See neo4j2d3_bak.json for an example of the correct json format
+The JSON format is basically a flat list of nodes and then a flat list of links(edges). The links must have a source and target that correspond to the nodes they're related to. See neo4j2d3_bak.json for an example of the correct JSON format
 ```
 {
   "nodes": [
@@ -124,7 +128,7 @@ The required json format is basically a flat list of nodes and then a flat list 
 }
 ```
 
-You can modify the [Cypher](https://neo4j.com/developer/cypher-query-language/) queries to your particular data set as long as the resulting json is in the correct format.
+You can modify the [Cypher](https://neo4j.com/developer/cypher-query-language/) queries to your particular data set as long as the resulting JSON is in the correct format.
 
 ```
 def create_guest_node():
@@ -142,9 +146,9 @@ The JavaScript relies on the properties 'name', 'id' and 'group' for nodes and f
 
 The application will create event and guest nodes and relationships using the Facebook events that you import. Therefore specific property key values are expected. Your database should be empty the first time you run it. 
 
-1. Start Neo4J. 
-2. Run the application run.py. 
-3. Open your website URL in the latest Chrome on desktop (other browsers not yet supported).
+1. Start Neo4J locally or make sure it's running online. 
+2. Run the application file run.py. 
+3. Open your website URL in the latest Chrome on desktop (other browsers not yet supported). If you're running this locally, it has to be accessed with your IP address not localhost.
 4. Click the login button. There will be a Facebook popup. Login in using your Facebook account.
 5. Accept the permissions the application asks for the first time (public profile)
 6. Once the popup closes, the page should automatically reload, but if it doesn't, refresh.
@@ -155,131 +159,74 @@ The application will create event and guest nodes and relationships using the Fa
 
 ### Options
 
-We are using a simple D3 layout based on [Mike Bostock's Force-Directed graph](https://bl.ocks.org/mbostock/4062045). Display, styling, animations and other options can be set in the D3 javascript in index.html. Click and other event functions can be attached to the links and nodes. Here we have added jQuery to populate the info box with node and link properties, include Facebook pictures and profile links when clicked. In the simulation force use id to map the links to your node ids, index, or another property in your data set.
+We are using a simple D3 layout based on [Mike Bostock's Force-Directed graph](https://bl.ocks.org/mbostock/4062045). Display, styling, animations and other options can be set in the D3 javascript in index.html. Click and other event functions can be attached to the links and nodes. 
 
-We are using the value property of links to set color, distance and strength. We have set the value to correspond to a particular RSVP type. We have two groups of nodes, events and guests, and we use the group property to assign the nodes a different color and radius.
+We are using the value property of links to set color, distance and strength. We have set the value to correspond to a particular RSVP type. We have two groups of nodes, events and guests, and we use the group property to assign the nodes a different color and radius. We also made the graph fit any size screen on load and added the zoom functionality:
 
 ```
- // D3 force layout
-    var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink()
-            .distance(function (d) {
-                return (3 - (d.value / 3)) * 66;
-            })
-            .strength(function (d) {
-                return (3 - (d.value / 3)) * 0.5;
-            })
-            .id(function (d) {
-                return d.id;
-            }))
-        .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2));
+var focus_node = null,
+    highlight_node = null,
+    highlight_color = "#d32f2f",
+    highlight_trans = 0.1,
+    outline = false,
+    timeStamp = Math.floor(Date.now() / 1000),
+    dataSource = "/static/data/neo4j2d3_new.json" + "?time=" + timeStamp,
+    width = $('body').width(),
+    height = $('body').height(),
+    svg = d3.select("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .call(d3.zoom().on("zoom", function () {
+       svg.selectAll('g').attr("transform", d3.event.transform)
+    }));
 
-    d3.json(dataSource, function (error, graph) {
-        if (error) throw error;
+// D3 force layout
+```
 
-        var link = svg.append("g")
-            .attr("class", "links")
-            .selectAll("line")
-            .data(graph.links)
-            .enter().append("line")
-            .attr("stroke", function (d) {
-                var colorstroke;
-                //different edge colors based on edge value
-                switch (d.value) {
-                    case 1:
-                        colorstroke = "#CCC";
-                        break;
-                    case 2:
-                        colorstroke = "#ffa726";
-                        break;
-                    case 3:
-                        colorstroke = "#b2ff59";
-                        break;
-                    default:
-                        colorstroke = "#CCC";
-                }
-                return colorstroke;
-            });
+Here we have added jQuery to populate the info box with node and link properties, include Facebook pictures and profile links when clicked. In the simulation force use id to map the links to your node ids, index, or another property in your data set.
 
-        var node = svg.append("g")
-            .attr("class", "nodes")
-            .selectAll("circle")
-            .data(graph.nodes)
-            .enter().append("circle")
-            .attr("r", function (d) {
-                return (d.group === 0 ? 15 : 5);
-            })
-            .attr("fill", function (d) {
-                return (d.group === 0 ? '#fdd835' : '#90caf9');
-            })
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged));
-//              .on("end", dragended));
+```
+ function showinfo(d) {
+    //display info about nodes and edges in info box when clicked
+    var nameTxt = $('#name'),
+        propTxt = $('#properties'),
+        typeTxt = $('#type'),
+        fbPic = $('#fb_pic');
+    //remove selected class from all other elements
+    $('.nodes circle, .links line').not(this).removeClass("selected");
 
-        //show the node's name property on hover
-        node.append("title")
-            .text(function (d) {
-                return d.name;
-            });
+    if (!$(this).is('.selected')) {
+        //if the clicked element doesn't have the selected class, add it
+        this.setAttribute('class', "selected");
 
-        //add click function to nodes
-        node.on("click", showinfo);
-
-        //show the link's rsvp property on hover
-        link.append("title")
-            .text(function (d) {
-                return d.rsvp;
-            });
-
-        //add click function to links
-        link.on("click", showinfo);
-
-        simulation
-            .nodes(graph.nodes)
-            .on("tick", ticked);
-
-        simulation.force("link")
-            .links(graph.links);
-
-        function ticked() {
-            link
-                .attr("x1", function (d) {
-                    return d.source.x;
-                })
-                .attr("y1", function (d) {
-                    return d.source.y;
-                })
-                .attr("x2", function (d) {
-                    return d.target.x;
-                })
-                .attr("y2", function (d) {
-                    return d.target.y;
-                });
-
-            node
-                .attr("cx", function (d) {
-                    return d.x;
-                })
-                .attr("cy", function (d) {
-                    return d.y;
-                });
+        if (d.id) {
+            console.log('node');
+            nameTxt.html('<b>Node:</b> <a href="https://www.facebook.com/' + d.id + '" target="_blank">' + d.name + '</a>');
+            propTxt.html('<b>ID</b>: ' + d.id);
+            typeTxt.html('<b>Type</b>: ' + (d.group === 0 ? 'Event' : 'Guest'));
+            fbPic.css({'background-image': 'url("https://graph.facebook.com/' + d.id + '/picture?type=large&width")'});
+        } else {
+            console.log('edge');
+            nameTxt.html('<b>Edge</b>: ' + d.rsvp);
+            propTxt.html('<b>Source:</b> ' + (d.source.group === 0 ? 'Event - ' : 'Guest - ') + ' ' + d.source.name);
+            typeTxt.html('<b>Target:</b> ' + (d.target.group === 0 ? 'Event - ' : 'Guest - ') + ' ' + d.target.name);
+            fbPic.css({'background-image': ''});
         }
-    });
 
-    function dragstarted(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
+        console.log(d);
 
-    function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
+    } else {
+        //if the clicked element has the selected class remove it
+        $(this).removeClass('selected');
+        //remove the information about the previous selected element
+        nameTxt.html('');
+        propTxt.html('');
+        typeTxt.html('');
+        fbPic.css({'background-image': ''});
     }
+}
 ```
-For more options, see [D3](https://d3js.org/) docs and examples
+For more options, see [D3](https://d3js.org/) docs and examples.
 
 
 ## Notes
@@ -287,25 +234,28 @@ This app does not yet contain a test to check if the Facebook event is valid, on
 
 Private events are not currently supported as this require extending the app permissions which would call for a [Facebook review](https://developers.facebook.com/docs/facebook-login/overview). The assumption is that only the default public profile permissions are requested. A developer could change this in the [permissions scope](https://developers.facebook.com/docs/facebook-login/permissions/requesting-and-revoking) requested to allow for their own private events data to be pulled and no review would be required if the app was in developer test mode.
 
+The event data does not continuously update in real time, but you can update an event by importing it again with the form.
+
 In the Facebook Graph API the edge "unsure" is used to describe people who have responded to an event as either "Maybe" or "Interested".
 
+Browsers other than the latest Chrome on Windows have not been tested.
 
 ## Built With
 
 * [Neo4j](https://neo4j.com/) - Non-relational Graph database
-* [Python](https://www.python.org/) - programming language.
+* [Python](https://www.python.org/) (version 3.4.3) - programming language.
 * [Flask](https://rometools.github.io/rome/) - a microframework for Python
-* [D3](https://d3js.org/) - A graph visualization api
+* [D3](https://d3js.org/) (version 4.0) - A graph visualization api
 
 ## Contributing
 
 We welcome contributions to this project and are open to ideas. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## Authors
+## Authors / Collaborators
 
 * **Ray Bernard** - [@SuprFanz](https://github.com/suprfanz)
 * **Jen Webb** - [@jenwebb](https://github.com/jenwebb)
-
+* **Alexei Demchouk** - [@aleksod](https://github.com/aleksod)
 
 ## License
 
@@ -315,4 +265,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 * [Facebook-SDK](https://github.com/mobolic/facebook-sdk/tree/master/examples/flask)
 * [Mike Bostock](https://bl.ocks.org/mbostock/4062045)
-
+* We use the [Neo4j bolt driver for Python](https://github.com/neo4j/neo4j-python-driver) exclusively to connect to Neo4j but if you want to see an example of a Flask application that uses [Py2Neo](https://github.com/technige/py2neo), check out Nicole White's [neo4j-flask](https://github.com/nicolewhite/neo4j-flask).
