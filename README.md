@@ -1,4 +1,4 @@
-# SuprFanz.com Tutorial: Importing Data from Facebook into Neo4j for D3 Data Visualizaion Step by Step
+# SuprFanz.co Tutorial: Importing Data from Facebook into Neo4j for D3 Data Visualizaion Step by Step
 
 ## UPDATE
 As of April 4, 2018, Facebook has changed the Graph API so event guest edges can no longer be accessed (the RSVP list). Read more [here](https://newsroom.fb.com/news/2018/04/restricting-data-access/) and [here](https://developers.facebook.com/blog/post/2018/04/04/facebook-api-platform-product-changes/). This app can be repurposed to pull other edges from the Graph API that are still currently allowed into Neo4j in order to visualize them in D3, however it will have to be refactored. We are working on this and will provide an update soon.
